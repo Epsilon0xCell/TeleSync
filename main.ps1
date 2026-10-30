@@ -32,29 +32,57 @@ $outputFilePath = Join-Path $folderPath "sync.7z"
 # Build the path to the 7-Zip executable
 $sevenZipPath = "C:\Program Files\7-Zip\7z.exe"
 
+# Stop early if 7-Zip is not installed where the script expects it
+if (-not (Test-Path $sevenZipPath)) {
+    Write-Host "7-Zip was not found at $sevenZipPath. Install 7-Zip first: https://7-zip.org/download.html"
+    exit 1
+}
+
+# Ask for the passwords at run time. Passwords are never stored in this script.
+# Back the passwords up somewhere safe and private: without them the archive cannot be opened.
+$archivePasswordSecure = Read-Host "Enter the password for the archive" -AsSecureString
+$archivePassword = [Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR($archivePasswordSecure))
+if ([string]::IsNullOrEmpty($archivePassword)) {
+    Write-Host "A password is required."
+    exit 1
+}
+
+# A large archive that gets split can use a second password for the split volumes.
+# Leave the second prompt blank to reuse the archive password.
+$splitPasswordSecure = Read-Host "Enter the password for the split volumes (leave blank to reuse the archive password)" -AsSecureString
+$splitPassword = [Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR($splitPasswordSecure))
+if ([string]::IsNullOrEmpty($splitPassword)) {
+    $splitPassword = $archivePassword
+}
+
 # Compress and encrypt the folder using 7-Zip
-& $sevenZipPath a -t7z -m0=lzma2 -mx=9 -mfb=273 -md=256m -ms=on -p"H!jEKe-J7qy6}40!-FD!v}hc+yiF])z*}-z5Qne7v2x4EHC7PB+pjx]KKUdqZPU6C2f%~a.p7z,TG^m%dJDUGT6ndQ6VNy>CRL@K" -mhe=on $outputFilePath $folderToCompressPath
+& $sevenZipPath a -t7z -m0=lzma2 -mx=9 -mfb=273 -md=256m -ms=on -p"$archivePassword" -mhe=on $outputFilePath $folderToCompressPath
+
+# Stop early if 7-Zip did not produce the archive
+if (-not (Test-Path $outputFilePath)) {
+    Write-Host "7-Zip did not create $outputFilePath. Nothing was uploaded or split."
+    exit 1
+}
 
 # Check if the output file is larger than 1.9GB and split it if necessary
 $maxFileSize = 1.9GB
 
 if ((Get-Item $outputFilePath).Length -gt $maxFileSize) {
-    $splitSize = [Math]::Ceiling((Get-Item $outputFilePath).Length / ($maxFileSize * 1MB))
     $outputFileBaseName = [System.IO.Path]::GetFileNameWithoutExtension($outputFilePath)
     $outputFileExtension = [System.IO.Path]::GetExtension($outputFilePath)
 
-    # Split the file using 7-Zip
-    & $sevenZipPath a -t7z -m0=lzma2 -mx=9 -mfb=273 -md=256m -ms=on "-v1g" -p"imu7J?VKv4N8a}6RfJu:!znXXtLrYP>qP>0Ef3j#sCxMTnvT@A*3p>pHunyz4P-Zn*-%PxLY2*~+%3,WTtfs~JhW1f3MHF7tz}WL" -mhe=on "${outputFilePath}.split" "${outputFilePath}"
+    # Split the file using 7-Zip, into volumes of at most 1900 MB each
+    & $sevenZipPath a -t7z -m0=lzma2 -mx=9 -mfb=273 -md=256m -ms=on "-v1900m" -p"$splitPassword" -mhe=on "${outputFilePath}.split" "${outputFilePath}"
 
     # Delete the original file
     Remove-Item $outputFilePath
 
     # Notify the user about the output file location and size
     Write-Host "The compressed and encrypted file(s) are located in:" $folderPath
-    $outputFiles = Get-ChildItem $folderPath -Filter "${outputFileBaseName}*.${outputFileExtension}"
+    $outputFiles = Get-ChildItem $folderPath -Filter "${outputFileBaseName}${outputFileExtension}.split.*"
     foreach ($outputFile in $outputFiles) {
             $fileSize = "{0:N2}" -f ($outputFile.Length / 1MB)
-            Write-Host $outputFile.Name + " " + $fileSize + " MB"
+            Write-Host $outputFile.Name " " $fileSize " MB"
     }
 }
 elseif ((Get-Item $outputFilePath).Length -le $maxFileSize) {

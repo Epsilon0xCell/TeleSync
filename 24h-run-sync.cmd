@@ -1,6 +1,5 @@
 @echo off
-set SCRIPTS_DIR="C:\TeleSync-main"
-cd /d "%SCRIPTS_DIR%"
+cd /d "%~dp0"
 
 :: Check if the script is running as administrator
 NET SESSION >NUL 2>&1

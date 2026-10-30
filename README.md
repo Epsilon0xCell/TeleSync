@@ -1,63 +1,51 @@
 # TeleSync
-Unlimited storage utilizing telegram with folder sync and file splitting. Fast CLI Interface.
 
-# Why create this?
-To clarify, many other solutions for backups are not "set and forget," which can be problematic because backups need to be consistently run on a schedule. That's why I created Telesync, which combines AES encrypted files, file splitting, folder sync, and scheduled runs into a single that combines all of the features together for a more efficient and reliable backup system.
+![preview](preview.png)
 
-# Platforms?:
-Currently this is windows only but if it gains enough traction I will bring it over to GNU/Linux and MacOS.
+Folder sync to Telegram, used as backup storage. A PowerShell script compresses and encrypts a local `sync` folder with 7-Zip, a Python script creates a dated Telegram backup channel, and a Python script uploads the archive to that channel. A batch file repeats the whole cycle every 24 hours.
 
-# Goal:
-Create code for a telegram script in python that grabs all files in a directory encrypts them and them uploads the files to telegram, however the files should be split into mutiple files if they are above 1.9GB and the script should ask questions such as if you would like to upload or decrypt a file. Decryption should take a file that was uploaded to telegram and decrypt it based on the file location. The script should sync every hour using a batch script.
+## Platform
 
-# How to get started?
+Windows only. The main script is PowerShell, the launcher is a Windows batch file, and the 7-Zip path in the script is a Windows path.
 
-Update all the variable values in the script with your values and then run the 24h-run-sync.cmd file for the first time you should answer the first-time-run questios and then it should become automatic every 24h as long as the .cmd script is open. You are able to run this script on a server if needed. The more you add to the sync folder the more that gets encrypted and then uploaded every 24 hours.
+## What each file does
 
-# Where to put this folder?
-Preferably git clone this repo on the C drive top layer root "/"
+- `main.ps1`: Creates an `encrypted_zips` folder, creates the `sync` folder if it does not exist, and uses 7-Zip to compress and encrypt `sync` into `encrypted_zips/sync.7z` with header encryption (`-mhe=on`). It asks for the archive password at run time. Passwords are not stored in the script. If the archive is larger than 1.9 GB, it asks for a second password (blank reuses the first), re-encrypts the archive into split volumes of at most 1900 MB named `sync.7z.split.001`, `sync.7z.split.002`, and so on, and deletes the unsplit archive.
+- `create-channel.py`: Logs in with Telethon and creates a Telegram channel named `backup-YYYYMMDD_HHMMSS` (for example `backup-20230312_132606` is 12 March 2023, 13:26:06). It writes the channel invite link to `channel_invite_link.txt`.
+- `upload.py`: Reads the invite link from `channel_invite_link.txt` and runs `telegram-upload` over the files in `encrypted_zips`, with `--large-files=split`, `--print-file-id`, and `preview.png` as the thumbnail file. Run `create-channel.py` first, or the script exits with an explanation.
+- `download.py`: Creates a `telegram_downloads` folder, changes into it, and runs `telegram-download --interactive`, so files are picked interactively.
+- `24h-run-sync.cmd`: Runs `main.ps1`, `create-channel.py`, and `upload.py`, waits 86400 seconds (24 hours), and loops for as long as the window stays open. It must be run as administrator, and it runs from the folder the batch file itself is in, so the repo can be cloned anywhere.
 
-# Warning:
+## Requirements
 
-Please back up your keys, if you do not your storage will be for naught do not back them up on telegram back them up on an external private cloud solution. You do not need much storage to back your keys up.
+- Windows, with PowerShell and Python 3
+- 7-Zip installed at `C:\Program Files\7-Zip\7z.exe` (https://7-zip.org/download.html). `main.ps1` stops with a message if it is not there.
+- Python packages: `pip install -r requirements.txt` (Telethon, and telegram-upload, which provides both the `telegram-upload` and `telegram-download` commands)
+- A Telegram API id and hash from https://my.telegram.org/apps
 
-# What is the channel name format?:
-```
-The format of the date in the file name "backup-20230312_132606" is YYYYMMDD_HHMMSS, where:
+## Setup and first run
 
-YYYY: Represents the year with four digits (e.g., 2023).
-MM: Represents the month with two digits (e.g., 03 for March).
-DD: Represents the day with two digits (e.g., 12).
-HH: Represents the hour with two digits in 24-hour format (e.g., 13 for 1 PM).
-MM: Represents the minute with two digits (e.g., 26).
-SS: Represents the second with two digits (e.g., 06).
-Therefore, the date and time in the file name "backup-20230312_132606" represents March 12, 2023, at 1:26:06 PM.
-```
+1. Clone this repo anywhere, for example on the C drive.
+2. Install 7-Zip and the Python packages above.
+3. Set the Telegram credentials as environment variables before running `create-channel.py`: `TELEGRAM_API_ID`, `TELEGRAM_API_HASH`, and optionally `TELEGRAM_PHONE`. Without the first two, the script exits with a message saying to set them.
+4. Put the files you want backed up in the `sync` folder (the scripts create it empty on the first run if it is missing).
+5. Run `24h-run-sync.cmd` as administrator. Each cycle asks for the archive password, and for a second split password if the archive is over 1.9 GB.
 
-# What does TSA stand for?
+## Downloading and opening a backup
 
-TSA stands for TeleSync Archive and is in the preview of the files you upload.
+Run `python download.py` in the repo folder (the old README said `download.ps1`; the file is a Python script). Opening an archive is done with 7-Zip: extract `sync.7z` directly, or open `sync.7z.split.001` with all split volumes in the same folder, and enter the password or passwords you set when it was created. There is no separate decrypt script in this repo.
 
-# How to download?:
+## Warnings and limits
 
-Running a powershell window in the folder simply run python download.ps1
+- Back up your passwords somewhere safe and private, and not on Telegram. If you lose a password, the archive made with it cannot be opened, and nobody can recover it for you.
+- Two different passwords on one backup only happen when the archive is large enough to split: one password for the archive, and a second one for the split volumes.
+- Telegram limits how many channels an account can be in or own (the original notes said 500 for free accounts and 1000 for premium). Each sync cycle creates a new channel, so old backup channels add up.
+- TSA in the upload preview stands for TeleSync Archive.
 
-# Can you set two different passwords on the same file?:
+## Resources
 
-You can if the file is large enough to be split meaning it must be over 1.9GB this means that it is possible to set a password for the file before splitting and a password for the split files.
-
-# Channel Limit?
-
-Telegram has a 500 channel limit for free users and a 1000 channel limit for premium users, make sure to clear up channels or modify the upload script to save in DM if you hit a limit.
-
-# Resources: 
-```
-https://7-zip.org/download.html (Install on windows before running script this is used for the file operations)
-https://github.com/Nekmo/telegram-upload pip3 install -U telegram-upload
-https://my.telegram.org/apps (ID Values)
-https://docs.telethon.dev/en/stable/ (Telethon) pip3 install telethon
-https://www.python.org/ (Install python to windows path)
-https://kotatogram.github.io/ (Custom Telegram Client, good for high-speed download/upload if you need access to a file fast)
-https://gofile.io/ (Good for uploading files for projects and sharing with the rest of the world, essentially generating a public download link for others. The issue with this is that if the file is not downloaded a lot it will get removed from GoFile's servers, this is why you should use this as temporary public link or for projects that will be sure to have people actively downloading the file)
-https://teledriveapp.com/ (Good for uploading individual files but not good for backups and not lightweight)
-```
+- 7-Zip: https://7-zip.org/download.html
+- telegram-upload: https://github.com/Nekmo/telegram-upload
+- Telegram API credentials: https://my.telegram.org/apps
+- Telethon docs: https://docs.telethon.dev/en/stable/
+- Python: https://www.python.org/
