@@ -1,9 +1,19 @@
+import os
 from datetime import datetime
+
 from telethon import TelegramClient, functions
 
-api_id = 
-api_hash = ''
-phone = ''
+# Get API credentials from https://my.telegram.org and provide them as
+# environment variables (or replace the defaults with your values here).
+api_id = int(os.environ.get("TELEGRAM_API_ID", "0"))
+api_hash = os.environ.get("TELEGRAM_API_HASH", "")
+phone = os.environ.get("TELEGRAM_PHONE", "")
+
+if not api_id or not api_hash:
+    raise SystemExit(
+        "Set TELEGRAM_API_ID and TELEGRAM_API_HASH first "
+        "(see https://my.telegram.org)."
+    )
 
 client = TelegramClient('session_name', api_id, api_hash)
 
