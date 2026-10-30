@@ -7,6 +7,9 @@ $currentDirectory = Get-Location
 # Build the full path to the folder to create
 $folderPath = Join-Path $currentDirectory $folderName
 
+# I wipe encrypted_zips at the start on purpose. Old split volumes from
+# an earlier run would mix with the new set, and upload.py sends the
+# whole folder, so a stale volume could go up beside the new archive.
 # Check if the folder already exists and delete it if it does
 if (Test-Path $folderPath) {
     Remove-Item $folderPath -Recurse
@@ -21,6 +24,9 @@ $folderToCompressName = "sync"
 # Build the path to the folder to compress and encrypt
 $folderToCompressPath = Join-Path $currentDirectory $folderToCompressName
 
+# I create sync when it is missing instead of failing. A first run then
+# makes an empty archive, which does no harm, and I can see where the
+# files I want backed up need to go.
 # Check if the folder to compress and encrypt exists and create it if it doesn't
 if (-not (Test-Path $folderToCompressPath)) {
     New-Item -ItemType Directory -Path $folderToCompressPath
@@ -56,6 +62,9 @@ if ([string]::IsNullOrEmpty($splitPassword)) {
 }
 
 # Compress and encrypt the folder using 7-Zip
+# I set -mhe=on so the file names inside the archive are encrypted too,
+# not only the file data. Without it, anyone holding the archive could
+# read my folder listing without the password.
 & $sevenZipPath a -t7z -m0=lzma2 -mx=9 -mfb=273 -md=256m -ms=on -p"$archivePassword" -mhe=on $outputFilePath $folderToCompressPath
 
 # Stop early if 7-Zip did not produce the archive
@@ -64,6 +73,9 @@ if (-not (Test-Path $outputFilePath)) {
     exit 1
 }
 
+# I compare against 1.9 GB here and split into 1900m volumes below.
+# Those two numbers have to stay paired. Telegram rejects files near
+# 2 GB, so I leave headroom instead of cutting close to the limit.
 # Check if the output file is larger than 1.9GB and split it if necessary
 $maxFileSize = 1.9GB
 
@@ -74,6 +86,9 @@ if ((Get-Item $outputFilePath).Length -gt $maxFileSize) {
     # Split the file using 7-Zip, into volumes of at most 1900 MB each
     & $sevenZipPath a -t7z -m0=lzma2 -mx=9 -mfb=273 -md=256m -ms=on "-v1900m" -p"$splitPassword" -mhe=on "${outputFilePath}.split" "${outputFilePath}"
 
+    # I delete the unsplit original here so upload.py does not send both
+    # copies. This spot assumes the split above worked. The listing
+    # below is where I see the volumes before anything uploads.
     # Delete the original file
     Remove-Item $outputFilePath
 
