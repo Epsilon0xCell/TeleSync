@@ -1,12 +1,24 @@
+![Intro scenery](intro-banner.png)
+
+
 # TeleSync
 
-![preview](preview.png)
+![Wordmark banner](banner.png)
+
+![Animated scene](scene.svg)
+
+# TeleSync
+
 
 Folder sync to Telegram, used as backup storage. A PowerShell script compresses and encrypts a local `sync` folder with 7-Zip, a Python script creates a dated Telegram backup channel, and a Python script uploads the archive to that channel. A batch file repeats the whole cycle every 24 hours.
+
+![Separator](sep-heavy.svg)
 
 ## Platform
 
 Windows only. The main script is PowerShell, the launcher is a Windows batch file, and the 7-Zip path in the script is a Windows path.
+
+![Separator](sep-light.svg)
 
 ## What each file does
 
@@ -16,12 +28,16 @@ Windows only. The main script is PowerShell, the launcher is a Windows batch fil
 - `download.py`: Creates a `telegram_downloads` folder, changes into it, and runs `telegram-download --interactive`, so files are picked interactively.
 - `24h-run-sync.cmd`: Runs `main.ps1`, `create-channel.py`, and `upload.py`, waits 86400 seconds (24 hours), and loops for as long as the window stays open. It must be run as administrator, and it runs from the folder the batch file itself is in, so the repo can be cloned anywhere.
 
+![Separator](sep-heavy.svg)
+
 ## Requirements
 
 - Windows, with PowerShell and Python 3
 - 7-Zip installed at `C:\Program Files\7-Zip\7z.exe` (https://7-zip.org/download.html). `main.ps1` stops with a message if it is not there.
 - Python packages: `pip install -r requirements.txt` (Telethon, and telegram-upload, which provides both the `telegram-upload` and `telegram-download` commands)
 - A Telegram API id and hash from https://my.telegram.org/apps
+
+![Separator](sep-heavy.svg)
 
 ## Setup and first run
 
@@ -31,9 +47,13 @@ Windows only. The main script is PowerShell, the launcher is a Windows batch fil
 4. Put the files you want backed up in the `sync` folder (the scripts create it empty on the first run if it is missing).
 5. Run `24h-run-sync.cmd` as administrator. Each cycle asks for the archive password, and for a second split password if the archive is over 1.9 GB.
 
+![Separator](sep-heavy.svg)
+
 ## Downloading and opening a backup
 
 Run `python download.py` in the repo folder (the old README said `download.ps1`; the file is a Python script). Opening an archive is done with 7-Zip: extract `sync.7z` directly, or open `sync.7z.split.001` with all split volumes in the same folder, and enter the password or passwords you set when it was created. There is no separate decrypt script in this repo.
+
+![Separator](sep-heavy.svg)
 
 ## Warnings and limits
 
@@ -42,6 +62,8 @@ Run `python download.py` in the repo folder (the old README said `download.ps1`;
 - Telegram limits how many channels an account can be in or own (the original notes said 500 for free accounts and 1000 for premium). Each sync cycle creates a new channel, so old backup channels add up.
 - TSA in the upload preview stands for TeleSync Archive.
 
+![Separator](sep-heavy.svg)
+
 ## Resources
 
 - 7-Zip: https://7-zip.org/download.html
@@ -49,3 +71,7 @@ Run `python download.py` in the repo folder (the old README said `download.ps1`;
 - Telegram API credentials: https://my.telegram.org/apps
 - Telethon docs: https://docs.telethon.dev/en/stable/
 - Python: https://www.python.org/
+
+![Separator](sep-heavy.svg)
+
+> **Register entry:** Run create-channel.py before upload.py. A lost archive password cannot be recovered, and the split threshold is 1.9 GB with volumes of at most 1900 MB.
