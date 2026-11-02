@@ -47,7 +47,7 @@ code{background:rgba(255,255,255,.5);padding:.05rem .3rem}
 <span class="stamp">Inside the boundary</span>
 <h2>The packing stage: main.ps1</h2>
 <p>It wipes and remakes the <code>encrypted_zips</code> folder, creates <code>sync</code> if missing, checks for 7-Zip at <code>C:\Program Files\7-Zip\7z.exe</code> and stops with a message if it is absent, asks for an archive password at run time and stores no password anywhere, then compresses <code>sync</code> into <code>encrypted_zips/sync.7z</code> with header encryption on, so file names are hidden too.</p>
-<p>If that archive passes 1.9 GB it asks for a second password, blank reusing the first, remakes the archive as split volumes of at most 1900 MB named <code>sync.7z.split.001</code>, <code>sync.7z.split.002</code> and onward, and deletes the unsplit copy.</p>
+<p>A second password, for the split volumes, is asked at the same sitting, before compression begins, a blank answer reusing the first. If that archive passes 1.9 GB it remakes the archive as split volumes of at most 1900 MB named <code>sync.7z.split.001</code>, <code>sync.7z.split.002</code> and onward, and deletes the unsplit copy.</p>
 <p class="glyph">Stage mark: inside the boundary line.</p>
 </section>
 <section class="stage current">
