@@ -3,78 +3,72 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>TeleSync: The Boundary Stone at Eyam</title>
-<meta name="description" content="A Windows only backup arrangement in four working parts: a PowerShell script packs and encrypts a sync folder, Python scripts create a dated Telegram channel and send the packed result there, and a batch file repeats the round every 24 hours.">
+<title>TeleSync: The Night Mail</title>
+<meta name="description" content="Folder sync to Telegram used as backup storage, on a daily cycle: the folder is compressed and encrypted with 7-Zip, and uploaded to a dated Telegram channel every 24 hours. Windows only.">
 <style>
-@font-face{font-family:'Anton SC';src:url('fonts/AntonSC.ttf') format('truetype');}
-@font-face{font-family:'Barlow';src:url('fonts/Barlow.ttf') format('truetype');}
-:root{--grey:#8a9296;--stone:#e9e6da;--iron:#2c2e30;--amber:#e8a43e;--oak:#6e5234}
-*{box-sizing:border-box} body{margin:0;background:var(--grey);color:var(--iron);font-family:'Barlow',sans-serif;line-height:1.65}
-h1,h2{font-family:'Anton SC',sans-serif;letter-spacing:.02em}
-.hero{max-width:1020px;margin:0 auto;padding:1.6rem 5vw 0}.hero img{width:100%;height:auto;display:block}
-main{max-width:1020px;margin:0 auto;padding:0 5vw 2rem}
-.stage{background:var(--stone);padding:1.2rem 1.5rem;margin:1.5rem 0;position:relative;background-image:repeating-linear-gradient(transparent,transparent 27px,rgba(44,46,48,.08) 28px)}
-.stage .stamp{position:absolute;top:.7rem;right:1rem;border:2px solid var(--oak);color:var(--oak);padding:.1rem .5rem;font-size:.85rem}
-.stage.packing{border:4px solid var(--oak)}
-.stage.current h2{color:#8a6414}
-.glyph{font-size:.9rem;color:#5a5238}
-.btn{display:inline-block;background:#7d8488;color:var(--iron);font-family:'Anton SC',sans-serif;text-decoration:none;padding:.55rem 1.2rem;box-shadow:inset 0 0 0 2px #6a7174,inset 0 0 0 4px #9aa1a4;margin:.3rem .3rem .3rem 0;border-radius:3px}
-.btn:hover{box-shadow:inset 0 0 0 2px var(--amber),inset 0 0 0 4px #9aa1a4}
-.btn:active{transform:translateY(1px);box-shadow:inset 0 0 0 2px #6a7174,inset 0 0 0 4px #9aa1a4,2px 3px 0 rgba(44,46,48,.3)}
-.btn:focus-visible{outline:3px double #f2ecd8;outline-offset:3px}
-a{color:#6a4d14;text-decoration:none;border-bottom:1px dashed var(--iron)}
-a:before{content:'';display:inline-block;width:.6em;height:.6em;background:#6a7174;border-radius:2px;box-shadow:inset 0 3px 0 var(--iron);margin-right:.4em}
-a:hover:before{background:var(--amber)} .btn:before{content:none}
-.blocks{display:flex;gap:8px;margin:2rem auto;max-width:520px}
-.blocks span{flex:1;height:14px;background:#747a7c}
-.blocks em{width:8px;background:var(--amber)}
-.blocks.short{max-width:190px}.blocks.short em{display:none}
-.warn{border-left:5px solid var(--oak)}
-footer{max-width:1020px;margin:0 auto;padding:0 5vw 2.4rem;color:#3d4042;font-size:.92rem}
-code{background:rgba(255,255,255,.5);padding:.05rem .3rem}
+@font-face{font-family:'Archivo';src:url('fonts/Archivo-500.woff2') format('woff2');font-weight:500}
+@font-face{font-family:'Archivo';src:url('fonts/Archivo-700.woff2') format('woff2');font-weight:700}
+@font-face{font-family:'Archivo';src:url('fonts/Archivo-900.woff2') format('woff2');font-weight:900}
+@font-face{font-family:'Archivo Narrow';src:url('fonts/ArchivoNarrow-400.woff2') format('woff2');font-weight:400}
+@font-face{font-family:'Archivo Narrow';src:url('fonts/ArchivoNarrow-500.woff2') format('woff2');font-weight:500}
+@font-face{font-family:'Archivo Narrow';src:url('fonts/ArchivoNarrow-700.woff2') format('woff2');font-weight:700}
+:root{--night:#0c1420;--panel:#15222f;--panel2:#1a2a3a;--amber:#e9a13b;--amberlt:#f4bc63;--canvas:#c9b18c;--signal:#d23b2e;--ink:#e9e2cf;--dim:#a89e83;--line:#2c4256}
+*{box-sizing:border-box} body{margin:0;background:var(--night);color:var(--ink);font-family:'Archivo Narrow',sans-serif;line-height:1.6;font-size:1.06rem}
+h1,h2{font-family:'Archivo',sans-serif;color:var(--amberlt)}
+.hero{background:linear-gradient(170deg,#101d2c 0%,var(--night) 80%);padding:2.2rem 6vw 1.8rem;border-bottom:3px solid var(--amber)}
+.hero .inner{max-width:1020px;margin:0 auto}
+.hero img.wide{width:100%;height:auto;display:block;border:2px solid var(--amber);border-radius:6px}
+.hero .row{display:flex;gap:1.1rem;align-items:flex-start;margin-top:1.2rem}
+.hero .row img{width:92px;height:92px;border-radius:6px;border:2px solid var(--amber);object-fit:cover}
+.hero h1{margin:.1rem 0 .3rem;font-size:2.7rem;font-weight:900;color:var(--ink)}
+.hero p{max-width:44rem;color:var(--canvas)}
+.lamps{height:12px;max-width:1020px;margin:1.4rem auto 0;background-image:radial-gradient(circle,var(--amber) 3px,transparent 4.5px);background-size:52px 12px;background-repeat:repeat-x;opacity:.8}
+main{padding:0 6vw 3rem;max-width:1020px;margin:0 auto}
+.car{background:var(--panel);border:1px solid var(--line);border-top:5px solid var(--amber);border-radius:8px;padding:1.2rem 1.5rem;margin:1.6rem 0}
+.car h2{margin:.1rem 0 .5rem;font-size:1.55rem;font-weight:700}
+.car p{margin:.4rem 0}
+.strip{background:#0a0f16;color:#f0d9a8;padding:1rem 1.2rem;overflow-x:auto;font-family:ui-monospace,Menlo,monospace;border-radius:4px;border-left:6px solid var(--signal)}
+.btn{display:inline-block;background:var(--amber);color:#181106;font-family:'Archivo',sans-serif;font-weight:700;text-decoration:none;padding:.55rem 1.1rem;border-radius:999px;margin:.3rem .4rem .3rem 0}
+.btn:hover{background:var(--amberlt);color:#181106}.btn:active{transform:translateY(2px)}
+.btn:focus-visible{outline:2px dashed var(--ink);outline-offset:3px}
+a{color:var(--amberlt);font-weight:700}
+table{border-collapse:collapse}td{padding:.25rem .9rem .25rem 0;vertical-align:top}
+td:first-child{font-weight:700;color:var(--amberlt);white-space:nowrap;font-family:ui-monospace,Menlo,monospace;font-size:.95rem}
+ul{margin:.4rem 0;padding-left:1.2rem}li{margin:.3rem 0}
+.small{font-size:.95rem}
+footer{padding:0 6vw 2.5rem;max-width:1020px;margin:0 auto;color:var(--dim)}
 </style>
 </head>
 <body>
 <header class="hero">
-<img src="assets/intro-banner.png" alt="Eyam lane at dusk: shut cottages, church tower, and the boundary stone with coins under water in its hollow">
-<h1>TeleSync</h1>
-<p>TeleSync is a Windows only backup arrangement in four working parts. A PowerShell script packs and encrypts a local sync folder, Python scripts make a dated Telegram channel and send the packed result there, and a batch file sets the whole round going again every 24 hours.</p>
-<p><a class="btn" href="https://github.com/Epsilon0xCell/TeleSync">Open the repo</a> <a class="btn" href="#warnings">Warnings</a></p>
+<div class="inner">
+<img class="wide" src="assets/intro-banner.png" alt="The mail car's sliding door being pulled shut on the loaded canvas sacks, two porters standing on the wet lamplit platform and steam drifting through the night air">
+<div class="row"><img src="assets/logo.png" alt="A canvas mail sack cinched and sealed at the neck with a brass clasp, standing in lamplight on a night platform with a train behind it, the photograph set in a black frame on a white matte"><div><h1>TeleSync</h1><p>Folder sync to Telegram, used as backup storage, on a daily cycle. A PowerShell script compresses and encrypts a local sync folder with 7-Zip, a Python script creates a dated Telegram backup channel, and another uploads the archive to it, with a batch file repeating the whole cycle every 24 hours. Windows only, like a night mail train that runs on one line only, at the same hour, every single day.</p><p><a class="btn" href="https://github.com/Epsilon0xCell/TeleSync">Open the repo</a> <a class="btn" href="#run">The nightly run</a></p></div></div>
+<div class="lamps" aria-hidden="true"></div>
+</div>
 </header>
 <main>
-<div class="blocks"><span></span><em></em><span></span><em></em><span></span><em></em><span></span><em></em><span></span></div>
-<section class="stage packing">
-<span class="stamp">Inside the boundary</span>
-<h2>The packing stage: main.ps1</h2>
-<p>It wipes and remakes the <code>encrypted_zips</code> folder, creates <code>sync</code> if missing, checks for 7-Zip at <code>C:\Program Files\7-Zip\7z.exe</code> and stops with a message if it is absent, asks for an archive password at run time and stores no password anywhere, then compresses <code>sync</code> into <code>encrypted_zips/sync.7z</code> with header encryption on, so file names are hidden too.</p>
-<p>A second password, for the split volumes, is asked at the same sitting, before compression begins, a blank answer reusing the first. If that archive passes 1.9 GB it remakes the archive as split volumes of at most 1900 MB named <code>sync.7z.split.001</code>, <code>sync.7z.split.002</code> and onward, and deletes the unsplit copy.</p>
-<p class="glyph">Stage mark: inside the boundary line.</p>
-</section>
-<section class="stage current">
-<span class="stamp">At the stone</span>
-<h2>The handover stage</h2>
-<p><code>create-channel.py</code> logs in through Telethon using <code>TELEGRAM_API_ID</code>, <code>TELEGRAM_API_HASH</code>, and optionally <code>TELEGRAM_PHONE</code> taken from environment variables, makes a channel named <code>backup-YYYYMMDD_HHMMSS</code> down to the second, and writes its invite link into <code>channel_invite_link.txt</code>.</p>
-<p><code>upload.py</code> reads the first line of that file, exits with an explanation if the file is missing, and runs telegram-upload over <code>encrypted_zips</code> with large files set to split, file ids printed, and <code>preview.png</code> as the thumbnail.</p>
-<p class="glyph">Stage mark: at the boundary stone.</p>
-</section>
-<div class="blocks short"><span></span><span></span><span></span></div>
-<section class="stage">
-<span class="stamp">Outside the boundary</span>
-<h2>Return and repetition</h2>
-<p><code>download.py</code> makes a <code>telegram_downloads</code> folder and runs telegram-download in interactive mode so files are picked by hand. Opening a backup is done in 7-Zip itself; there is no separate decrypt script.</p>
-<p><code>24h-run-sync.cmd</code> must run as administrator, works from its own folder wherever the repo was cloned, runs <code>main.ps1</code>, <code>create-channel.py</code>, and <code>upload.py</code> in that order, waits 86400 seconds, and loops while its window stays open.</p>
-<p class="glyph">Stage mark: outside the boundary line.</p>
-</section>
-<section class="stage">
-<h2>Requirements</h2>
-<p>Windows with PowerShell and Python 3. <code>pip install -r requirements.txt</code> covering Telethon and telegram-upload. API credentials from <a href="https://my.telegram.org">my.telegram.org</a>.</p>
-</section>
-<section class="stage warn" id="warnings">
-<span class="stamp">Register entry</span>
-<h2>Warnings</h2>
-<p>Lost passwords are unrecoverable. The second password appears only on split backups. Backup channels pile up against Telegram account limits, noted in the repo as 500 for free accounts and 1000 for premium.</p>
-</section>
+<section class="car" id="run"><h2>The nightly run</h2><div class="strip">24h-run-sync.cmd (run as administrator)</div><p>The batch file runs <code>main.ps1</code>, <code>create-channel.py</code>, and <code>upload.py</code>, waits 86400 seconds (24 hours), and loops for as long as the window stays open. It runs from the folder the batch file itself is in, so the repo can be cloned anywhere. Each cycle asks for the archive password, and for a second split password if the archive is over 1.9 GB.</p></section>
+<section class="car"><h2>What each file does</h2><table>
+<tr><td>main.ps1</td><td>Compresses and encrypts the <code>sync</code> folder into <code>encrypted_zips/sync.7z</code> with 7-Zip, header encryption on (<code>-mhe=on</code>). The password is asked for at run time; passwords are not stored in the script.</td></tr>
+<tr><td>create-channel.py</td><td>Logs in with Telethon and creates a Telegram channel named <code>backup-YYYYMMDD_HHMMSS</code>, then writes the channel invite link to <code>channel_invite_link.txt</code>.</td></tr>
+<tr><td>upload.py</td><td>Reads the invite link and runs telegram-upload over the files in <code>encrypted_zips</code>, with <code>--large-files=split</code>, <code>--print-file-id</code>, and <code>preview.png</code> as the thumbnail. Run create-channel.py first, or it exits with an explanation.</td></tr>
+<tr><td>download.py</td><td>Creates a <code>telegram_downloads</code> folder and runs <code>telegram-download --interactive</code>, so files are picked interactively.</td></tr>
+<tr><td>24h-run-sync.cmd</td><td>The launcher above: the three steps, a 24 hour wait, and the loop.</td></tr>
+</table></section>
+<section class="car"><h2>When the sack is too big for one car</h2><p>If the archive is larger than 1.9 GB, the script asks for a second password (blank reuses the first), re-encrypts the archive into split volumes of at most 1900 MB named <code>sync.7z.split.001</code>, <code>sync.7z.split.002</code>, and so on, and deletes the unsplit archive. To open a split backup, keep all volumes in the same folder and open <code>sync.7z.split.001</code> with 7-Zip. There is no separate decrypt script in this repo.</p></section>
+<section class="car"><h2>Before the first run</h2><ul>
+<li>Windows, with PowerShell and Python 3, and 7-Zip installed at <code>C:\Program Files\7-Zip\7z.exe</code>. The main script stops with a message if it is not there.</li>
+<li>Python packages from <code>requirements.txt</code>: Telethon, and telegram-upload, which provides both the telegram-upload and telegram-download commands.</li>
+<li>A Telegram API id and hash, set as the environment variables <code>TELEGRAM_API_ID</code> and <code>TELEGRAM_API_HASH</code> (with <code>TELEGRAM_PHONE</code> optional) before running create-channel.py.</li>
+<li>The files to back up go in the <code>sync</code> folder; the scripts create it empty on the first run if it is missing.</li>
+</ul></section>
+<section class="car"><h2>Warnings, in the register</h2><ul>
+<li>Back up your passwords somewhere safe and private, and not on Telegram. If you lose a password, the archive made with it cannot be opened, and nobody can recover it for you.</li>
+<li>Two different passwords on one backup only happen when the archive is large enough to split: one for the archive, a second for the split volumes.</li>
+<li>Each sync cycle creates a new channel, so old backup channels add up against the account's channel limit.</li>
+</ul></section>
 </main>
-<footer><p>The dated channels remain elsewhere as the written proof that what was sealed away was also, carefully, preserved.</p></footer>
+<footer><p>Run create-channel.py before upload.py. A lost archive password cannot be recovered, and the split threshold is 1.9 GB with volumes of at most 1900 MB.</p></footer>
 </body>
 </html>
