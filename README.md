@@ -1,9 +1,11 @@
-![Intro scenery](intro-banner.png)
+![Intro scenery: the mail car door being pulled shut on the loaded canvas sacks, two porters standing on the wet lamplit platform and steam drifting through the night air](intro-banner.png)
 
 
 # TeleSync
 
-![Wordmark banner](banner.png)
+![Wordmark banner: a night mail train at a small station, amber lamps down the wet platform, porters loading canvas mail sacks into the lit mail car, the locomotive light cutting the dark ahead and a red signal glowing at the platform end](banner.png)
+
+<p align="center"><img src="logo.png" alt="TeleSync logo: a canvas mail sack cinched and sealed at the neck with a brass clasp, standing in lamplight on a night platform with a train behind it, the photograph set in a black frame on a white matte" width="200"></p>
 
 ![Animated scene](scene.svg)
 
